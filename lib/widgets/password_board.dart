@@ -755,10 +755,12 @@ class _PasswordBoardState extends State<PasswordBoard> {
     final decryptedPassword = _decryptedPasswords[entryId] ?? '';
 
     return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // Header with title and actions
           Row(
             children: [
@@ -875,6 +877,7 @@ class _PasswordBoardState extends State<PasswordBoard> {
               ),
             ],
           ),
+          const SizedBox(height: 24), // Bottom padding for better scrolling experience
         ],
       ),
     );
