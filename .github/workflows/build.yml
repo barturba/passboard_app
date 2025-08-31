@@ -175,9 +175,165 @@ jobs:
         path: password_board_macos.zip
         retention-days: 30
 
+  build-linux-self-hosted:
+    name: Build Linux (Self-Hosted)
+    runs-on: self-hosted
+    if: contains(github.event.head_commit.message, '[self-hosted]') || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.35.2'
+        channel: 'stable'
+        cache: true
+
+    - name: Enable Linux desktop
+      run: flutter config --enable-linux-desktop
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Build Linux release
+      run: flutter build linux --release
+
+    - name: Create Linux archive
+      run: |
+        echo "Checking build directory structure..."
+        ls -la build/linux/x64/release/ || echo "Build directory not found"
+        if [ -d "build/linux/x64/release/bundle" ]; then
+          echo "Creating Linux archive..."
+          cd build/linux/x64/release/bundle
+          tar -czf ../../../../password_board_linux_selfhosted.tar.gz .
+          echo "Archive created successfully"
+          ls -la ../../../../password_board_linux_selfhosted.tar.gz
+        else
+          echo "Linux bundle directory not found, checking alternatives..."
+          find build/linux/ -name "*" -type d | grep -i release || echo "No release directories found"
+          echo "Error: Linux build directory not found"
+          exit 1
+        fi
+
+    - name: Upload Linux build (Self-Hosted)
+      uses: actions/upload-artifact@v4
+      with:
+        name: password-board-linux-selfhosted
+        path: password_board_linux_selfhosted.tar.gz
+        retention-days: 30
+
+  build-windows-self-hosted:
+    name: Build Windows (Self-Hosted)
+    runs-on: self-hosted
+    if: contains(github.event.head_commit.message, '[self-hosted]') || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.35.2'
+        channel: 'stable'
+        cache: true
+
+    - name: Enable Windows desktop
+      run: flutter config --enable-windows-desktop
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Build Windows release
+      run: flutter build windows --release
+
+    - name: Create Windows archive
+      run: |
+        echo "Checking Windows build directory structure..."
+        Get-ChildItem build/windows/x64/runner/ -ErrorAction SilentlyContinue || echo "Build directory not found"
+        if (Test-Path "build/windows/x64/runner/Release") {
+          echo "Creating Windows archive..."
+          cd build/windows/x64/runner/Release
+          Compress-Archive -Path . -DestinationPath ../../../../password_board_windows_selfhosted.zip -Force
+          echo "Archive created successfully"
+          Get-Item ../../../../password_board_windows_selfhosted.zip
+        } else {
+          echo "Windows Release directory not found, checking alternatives..."
+          Get-ChildItem build/windows/ -Recurse -Directory | Where-Object { $_.Name -like "*Release*" -or $_.Name -like "*release*" }
+          echo "Error: Windows build directory not found"
+          exit 1
+        }
+
+    - name: Upload Windows build (Self-Hosted)
+      uses: actions/upload-artifact@v4
+      with:
+        name: password-board-windows-selfhosted
+        path: password_board_windows_selfhosted.zip
+        retention-days: 30
+
+  build-macos-self-hosted:
+    name: Build macOS (Self-Hosted)
+    runs-on: self-hosted
+    if: contains(github.event.head_commit.message, '[self-hosted]') || github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.35.2'
+        channel: 'stable'
+        cache: true
+
+    - name: Enable macOS desktop
+      run: flutter config --enable-macos-desktop
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Build macOS release
+      run: flutter build macos --release
+
+    - name: Create macOS archive
+      run: |
+        echo "Checking macOS build directory structure..."
+        ls -la build/macos/Build/Products/ || echo "Build directory not found"
+        if [ -d "build/macos/Build/Products/Release" ]; then
+          echo "Creating macOS archive..."
+          cd build/macos/Build/Products/Release
+          ls -la *.app || echo "No .app files found"
+
+          # Find the actual app name
+          APP_NAME=$(ls -d *.app 2>/dev/null | head -n1)
+          if [ -n "$APP_NAME" ]; then
+            echo "Found app: $APP_NAME"
+            zip -r ../../../../password_board_macos_selfhosted.zip "$APP_NAME"
+            echo "Archive created successfully"
+            ls -la ../../../../password_board_macos_selfhosted.zip
+          else
+            echo "Error: No .app files found in Release directory"
+            ls -la
+            exit 1
+          fi
+        else
+          echo "Error: macOS build directory not found"
+          exit 1
+        fi
+
+    - name: Upload macOS build (Self-Hosted)
+      uses: actions/upload-artifact@v4
+      with:
+        name: password-board-macos-selfhosted
+        path: password_board_macos_selfhosted.zip
+        retention-days: 30
+
   release:
     name: Create Release
-    needs: [build-linux, build-windows, build-macos]
+    needs: [build-linux, build-windows, build-macos, build-linux-self-hosted, build-windows-self-hosted, build-macos-self-hosted]
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
 
@@ -203,9 +359,12 @@ jobs:
           This release contains builds for all supported platforms:
 
           ### Downloads:
-          - **Linux**: `password_board_linux.tar.gz`
-          - **Windows**: `password_board_windows.zip`
-          - **macOS**: `password_board_macos.zip`
+          - **Linux (GitHub)**: `password_board_linux.tar.gz`
+          - **Windows (GitHub)**: `password_board_windows.zip`
+          - **macOS (GitHub)**: `password_board_macos.zip`
+          - **Linux (Self-Hosted)**: `password_board_linux_selfhosted.tar.gz`
+          - **Windows (Self-Hosted)**: `password_board_windows_selfhosted.zip`
+          - **macOS (Self-Hosted)**: `password_board_macos_selfhosted.zip`
 
           ### Installation Instructions:
 

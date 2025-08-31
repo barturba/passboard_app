@@ -176,6 +176,83 @@ The project includes automated CI/CD via GitHub Actions (`.github/workflows/buil
 # Upload builds/ contents to your release platform
 ```
 
+## 🏠 Self-Hosted Runners
+
+The project supports both GitHub-hosted and self-hosted runners for maximum flexibility and control.
+
+### Setting Up Self-Hosted Runners
+
+1. **Go to Repository Settings:**
+   - Navigate to your repository on GitHub
+   - Go to **Settings** → **Actions** → **Runners**
+
+2. **Add New Runner:**
+   - Click **"New self-hosted runner"**
+   - Choose your platform (Linux, Windows, macOS)
+   - Follow the setup instructions
+
+3. **Install Dependencies:**
+
+   **Linux:**
+   ```bash
+   # Install Flutter
+   sudo snap install flutter --classic
+
+   # Install build dependencies
+   sudo apt-get update
+   sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev libblkid-dev liblzma-dev
+   ```
+
+   **macOS:**
+   ```bash
+   # Install Flutter
+   brew install flutter
+
+   # Install CocoaPods
+   sudo gem install cocoapods
+   ```
+
+   **Windows:**
+   ```powershell
+   # Install Flutter from official installer
+   # Install Visual Studio Build Tools with Desktop development workload
+   ```
+
+4. **Configure Runner:**
+   - Start the runner service
+   - Add appropriate labels (e.g., `self-hosted`, `linux`, `windows`, `macos`)
+
+### Using Self-Hosted Builds
+
+#### Automatic Trigger:
+Include `[self-hosted]` in your commit message:
+```bash
+git commit -m "Add new feature [self-hosted]"
+```
+
+#### Manual Trigger:
+- Go to **Actions** tab in your repository
+- Select **"Build Password Board"** workflow
+- Click **"Run workflow"**
+
+### Self-Hosted vs GitHub-Hosted
+
+| Feature | GitHub-Hosted | Self-Hosted |
+|---------|---------------|-------------|
+| **Cost** | Free tier available | Your infrastructure |
+| **Speed** | May have queue times | Immediate execution |
+| **Customization** | Limited | Full control |
+| **Dependencies** | Pre-installed | You manage |
+| **Security** | Isolated | Your security model |
+| **Resources** | Limited | Your resources |
+
+### Build Artifacts
+
+Self-hosted builds create artifacts with `_selfhosted` suffix:
+- `password_board_linux_selfhosted.tar.gz`
+- `password_board_windows_selfhosted.zip`
+- `password_board_macos_selfhosted.zip`
+
 ## 📊 Build Information
 
 ### Build Size Estimates
