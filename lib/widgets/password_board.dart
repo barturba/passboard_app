@@ -19,6 +19,7 @@ class _PasswordBoardState extends State<PasswordBoard> {
   final Map<String, bool> _showPasswords = {};
   final Map<String, String> _decryptedPasswords = {};
   PasswordEntry? _selectedEntry;
+  Client? _selectedClient;
   final Map<String, bool> _hoveredFields = {};
   bool _isDecrypting = false;
 
@@ -36,6 +37,15 @@ class _PasswordBoardState extends State<PasswordBoard> {
       if (_decryptedPasswords.isEmpty) {
         _ensurePasswordsDecrypted();
       }
+      // Select first client by default if none selected
+      if (_selectedClient == null) {
+        final clients = context.read<AppProvider>().clients;
+        if (clients.isNotEmpty) {
+          setState(() {
+            _selectedClient = clients.first;
+          });
+        }
+      }
     });
   }
 
@@ -50,6 +60,15 @@ class _PasswordBoardState extends State<PasswordBoard> {
     super.didChangeDependencies();
     // Ensure passwords are decrypted when dependencies change
     _ensurePasswordsDecrypted();
+
+    // Ensure selected client is still valid
+    final clients = context.read<AppProvider>().clients;
+    if (_selectedClient != null && !clients.any((client) => client.id == _selectedClient!.id)) {
+      setState(() {
+        _selectedClient = clients.isNotEmpty ? clients.first : null;
+        _selectedEntry = null;
+      });
+    }
   }
 
   Future<void> _ensurePasswordsDecrypted() async {
@@ -60,6 +79,157 @@ class _PasswordBoardState extends State<PasswordBoard> {
     if (_decryptedPasswords.length != totalEntries) {
       await _decryptAllPasswords();
     }
+  }
+
+  Widget _buildClientList() {
+    final clients = context.read<AppProvider>().clients;
+
+    if (clients.isEmpty) {
+      return const Center(
+        child: Text(
+          'No clients found',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: clients.length,
+      itemBuilder: (context, index) {
+        final client = clients[index];
+        final isSelected = _selectedClient?.id == client.id;
+
+        return InkWell(
+          onTap: () {
+            setState(() {
+              _selectedClient = client;
+              _selectedEntry = null; // Clear selected entry when switching clients
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+                  : null,
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+                ),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  client.name,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${client.passwordEntries.length} password${client.passwordEntries.length == 1 ? '' : 's'}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPasswordListForClient() {
+    if (_selectedClient == null) {
+      return const Center(
+        child: Text(
+          'Select a client',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    final clientEntries = _selectedClient!.passwordEntries;
+    final filteredEntries = clientEntries.where((entry) {
+      return entry.title.toLowerCase().contains(_searchQuery) ||
+             entry.username.toLowerCase().contains(_searchQuery);
+    }).toList();
+
+    if (filteredEntries.isEmpty) {
+      return const Center(
+        child: Text(
+          'No passwords found',
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: filteredEntries.length,
+      itemBuilder: (context, index) {
+        final entry = filteredEntries[index];
+        final isSelected = _selectedEntry?.id == entry.id;
+
+        return InkWell(
+          onTap: () {
+            setState(() {
+              _selectedEntry = entry;
+            });
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+                  : null,
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+                ),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurface,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  entry.username,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontFamily: 'monospace',
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _decryptAllPasswords() async {
@@ -217,9 +387,9 @@ class _PasswordBoardState extends State<PasswordBoard> {
           Expanded(
             child: Row(
               children: [
-                // Left column: Password list
+                // Far left column: Client selection
                 SizedBox(
-                  width: 300,
+                  width: 200,
                   child: Container(
                     decoration: BoxDecoration(
                       border: Border(
@@ -228,78 +398,22 @@ class _PasswordBoardState extends State<PasswordBoard> {
                         ),
                       ),
                     ),
-                    child: filteredEntries.isEmpty
-                        ? _buildEmptyListState()
-                        : ListView.builder(
-                            itemCount: filteredEntries.length,
-                            itemBuilder: (context, index) {
-                              final entry = filteredEntries[index];
-                              final isSelected = _selectedEntry?.id == entry.id;
+                    child: _buildClientList(),
+                  ),
+                ),
 
-                              return InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedEntry = entry;
-                                  });
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
-                                        : null,
-                                    border: Border(
-                                      bottom: BorderSide(
-                                        color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
-                                      ),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        entry.title,
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                          color: isSelected
-                                              ? Theme.of(context).colorScheme.primary
-                                              : Theme.of(context).colorScheme.onSurface,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        entry.username,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                          fontFamily: 'monospace',
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 2),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            _getClientNameForEntry(entry),
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          _buildCompactTypeChip(entry.type),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
+                // Middle column: Password list for selected client
+                SizedBox(
+                  width: 250,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        right: BorderSide(
+                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                        ),
+                      ),
+                    ),
+                    child: _buildPasswordListForClient(),
                   ),
                 ),
 
