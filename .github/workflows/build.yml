@@ -198,16 +198,23 @@ jobs:
       with:
         path: artifacts/
 
-    - name: Create release archives
+    - name: Prepare individual platform files
       run: |
-        cd artifacts
-        # Create a combined release archive
-        zip -r ../password-board-complete.zip .
+        # Move individual platform files to root for release
+        mv artifacts/password-board-linux/password_board_linux.tar.gz ./
+        mv artifacts/password-board-windows/password_board_windows.zip ./
+        mv artifacts/password-board-macos/password_board_macos.zip ./
+
+        # List files to verify
+        ls -la *.tar.gz *.zip
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
-        files: password-board-complete.zip
+        files: |
+          password_board_linux.tar.gz
+          password_board_windows.zip
+          password_board_macos.zip
         tag_name: build-${{ github.run_number }}
         name: Password Board Build #${{ github.run_number }}
         draft: true
@@ -215,12 +222,12 @@ jobs:
         body: |
           ## Password Board - Multi-Platform Release
 
-          This release contains builds for all supported platforms:
+          This release contains individual downloads for each supported platform:
 
           ### Downloads:
-          - **Linux**: `password_board_linux.tar.gz`
-          - **Windows**: `password_board_windows.zip`
-          - **macOS**: `password_board_macos.zip`
+          - **🐧 Linux**: `password_board_linux.tar.gz` (Direct download)
+          - **🪟 Windows**: `password_board_windows.zip` (Direct download)
+          - **🍎 macOS**: `password_board_macos.zip` (Direct download)
 
           ### Installation Instructions:
 
