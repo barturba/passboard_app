@@ -49,13 +49,13 @@ jobs:
     - name: Create Linux archive
       run: |
         cd build/linux/x64/release/bundle
-        tar -czf ../../../password_board_linux.tar.gz .
+        tar -czf ../../../../password_board_linux.tar.gz .
 
     - name: Upload Linux build
       uses: actions/upload-artifact@v4
       with:
         name: password-board-linux
-        path: build/password_board_linux.tar.gz
+        path: password_board_linux.tar.gz
         retention-days: 30
 
   build-windows:
@@ -85,13 +85,13 @@ jobs:
     - name: Create Windows archive
       run: |
         cd build/windows/x64/runner/Release
-        Compress-Archive -Path . -DestinationPath ../../../password_board_windows.zip -Force
+        Compress-Archive -Path . -DestinationPath ../../../../password_board_windows.zip -Force
 
     - name: Upload Windows build
       uses: actions/upload-artifact@v4
       with:
         name: password-board-windows
-        path: build/password_board_windows.zip
+        path: password_board_windows.zip
         retention-days: 30
 
   build-macos:
@@ -121,13 +121,13 @@ jobs:
     - name: Create macOS archive
       run: |
         cd build/macos/Build/Products/Release
-        zip -r ../../../password_board_macos.zip "passboard_app.app"
+        zip -r ../../../../password_board_macos.zip "passboard_app.app"
 
     - name: Upload macOS build
       uses: actions/upload-artifact@v4
       with:
         name: password-board-macos
-        path: build/password_board_macos.zip
+        path: password_board_macos.zip
         retention-days: 30
 
   release:
