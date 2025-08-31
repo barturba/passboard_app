@@ -48,8 +48,20 @@ jobs:
 
     - name: Create Linux archive
       run: |
-        cd build/linux/x64/release/bundle
-        tar -czf ../../../../password_board_linux.tar.gz .
+        echo "Checking build directory structure..."
+        ls -la build/linux/x64/release/ || echo "Build directory not found"
+        if [ -d "build/linux/x64/release/bundle" ]; then
+          echo "Creating Linux archive..."
+          cd build/linux/x64/release/bundle
+          tar -czf ../../../../password_board_linux.tar.gz .
+          echo "Archive created successfully"
+          ls -la ../../../../password_board_linux.tar.gz
+        else
+          echo "Linux bundle directory not found, checking alternatives..."
+          find build/linux/ -name "*" -type d | grep -i release || echo "No release directories found"
+          echo "Error: Linux build directory not found"
+          exit 1
+        fi
 
     - name: Upload Linux build
       uses: actions/upload-artifact@v4
@@ -84,8 +96,20 @@ jobs:
 
     - name: Create Windows archive
       run: |
-        cd build/windows/x64/runner/Release
-        Compress-Archive -Path . -DestinationPath ../../../../password_board_windows.zip -Force
+        echo "Checking Windows build directory structure..."
+        Get-ChildItem build/windows/x64/runner/ -ErrorAction SilentlyContinue || echo "Build directory not found"
+        if (Test-Path "build/windows/x64/runner/Release") {
+          echo "Creating Windows archive..."
+          cd build/windows/x64/runner/Release
+          Compress-Archive -Path . -DestinationPath ../../../../password_board_windows.zip -Force
+          echo "Archive created successfully"
+          Get-Item ../../../../password_board_windows.zip
+        } else {
+          echo "Windows Release directory not found, checking alternatives..."
+          Get-ChildItem build/windows/ -Recurse -Directory | Where-Object { $_.Name -like "*Release*" -or $_.Name -like "*release*" }
+          echo "Error: Windows build directory not found"
+          exit 1
+        }
 
     - name: Upload Windows build
       uses: actions/upload-artifact@v4
@@ -120,8 +144,29 @@ jobs:
 
     - name: Create macOS archive
       run: |
-        cd build/macos/Build/Products/Release
-        zip -r ../../../../password_board_macos.zip "passboard_app.app"
+        echo "Checking macOS build directory structure..."
+        ls -la build/macos/Build/Products/ || echo "Build directory not found"
+        if [ -d "build/macos/Build/Products/Release" ]; then
+          echo "Creating macOS archive..."
+          cd build/macos/Build/Products/Release
+          ls -la *.app || echo "No .app files found"
+
+          # Find the actual app name
+          APP_NAME=$(ls -d *.app 2>/dev/null | head -n1)
+          if [ -n "$APP_NAME" ]; then
+            echo "Found app: $APP_NAME"
+            zip -r ../../../../password_board_macos.zip "$APP_NAME"
+            echo "Archive created successfully"
+            ls -la ../../../../password_board_macos.zip
+          else
+            echo "Error: No .app files found in Release directory"
+            ls -la
+            exit 1
+          fi
+        else
+          echo "Error: macOS build directory not found"
+          exit 1
+        fi
 
     - name: Upload macOS build
       uses: actions/upload-artifact@v4
