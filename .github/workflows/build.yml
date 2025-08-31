@@ -202,10 +202,10 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: password-board-complete.zip
-        tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || format('v{0}-{1}', github.run_number, github.run_attempt) }}
-        name: ${{ github.event_name == 'release' && github.event.release.name || format('Password Board Build #{0}', github.run_number) }}
-        draft: ${{ github.event_name == 'workflow_dispatch' }}
-        prerelease: ${{ github.event_name == 'workflow_dispatch' }}
+        tag_name: build-${{ github.run_number }}
+        name: Password Board Build #${{ github.run_number }}
+        draft: true
+        prerelease: true
         body: |
           ## Password Board - Multi-Platform Release
 
