@@ -1,0 +1,233 @@
+name: Build Password Board
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.0'
+        channel: 'stable'
+        cache: true
+
+    - name: Enable Linux desktop
+      run: flutter config --enable-linux-desktop
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Build Linux release
+      run: flutter build linux --release
+
+    - name: Create Linux archive
+      run: |
+        cd build/linux/x64/release/bundle
+        tar -czf ../../../password_board_linux.tar.gz .
+
+    - name: Upload Linux build
+      uses: actions/upload-artifact@v4
+      with:
+        name: password-board-linux
+        path: build/password_board_linux.tar.gz
+        retention-days: 30
+
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.0'
+        channel: 'stable'
+        cache: true
+
+    - name: Enable Windows desktop
+      run: flutter config --enable-windows-desktop
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Build Windows release
+      run: flutter build windows --release
+
+    - name: Create Windows archive
+      run: |
+        cd build/windows/x64/runner/Release
+        Compress-Archive -Path . -DestinationPath ../../../password_board_windows.zip -Force
+
+    - name: Upload Windows build
+      uses: actions/upload-artifact@v4
+      with:
+        name: password-board-windows
+        path: build/password_board_windows.zip
+        retention-days: 30
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.0'
+        channel: 'stable'
+        cache: true
+
+    - name: Enable macOS desktop
+      run: flutter config --enable-macos-desktop
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Build macOS release
+      run: flutter build macos --release
+
+    - name: Create macOS archive
+      run: |
+        cd build/macos/Build/Products/Release
+        zip -r ../../../password_board_macos.zip "Password Board.app"
+
+    - name: Upload macOS build
+      uses: actions/upload-artifact@v4
+      with:
+        name: password-board-macos
+        path: build/password_board_macos.zip
+        retention-days: 30
+
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.0'
+        channel: 'stable'
+        cache: true
+
+    - name: Enable web
+      run: flutter config --enable-web
+
+    - name: Install dependencies
+      run: flutter pub get
+
+    - name: Build web release
+      run: flutter build web --release
+
+    - name: Create web archive
+      run: |
+        cd build/web
+        zip -r ../password_board_web.zip .
+
+    - name: Upload web build
+      uses: actions/upload-artifact@v4
+      with:
+        name: password-board-web
+        path: build/password_board_web.zip
+        retention-days: 30
+
+  release:
+    name: Create Release
+    needs: [build-linux, build-windows, build-macos, build-web]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+
+    steps:
+    - name: Download all build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+
+    - name: Create release archives
+      run: |
+        cd artifacts
+        # Create a combined release archive
+        zip -r ../password-board-complete.zip .
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: password-board-complete.zip
+        body: |
+          ## Password Board - Multi-Platform Release
+
+          This release contains builds for all supported platforms:
+
+          ### Downloads:
+          - **Linux**: `password_board_linux.tar.gz`
+          - **Windows**: `password_board_windows.zip`
+          - **macOS**: `password_board_macos.zip`
+          - **Web**: `password_board_web.zip`
+
+          ### Installation Instructions:
+
+          **🐧 Linux:**
+          ```bash
+          tar -xzf password_board_linux.tar.gz
+          cd password_board
+          ./password_board
+          ```
+
+          **🪟 Windows:**
+          ```cmd
+          # Extract password_board_windows.zip
+          # Run password_board.exe
+          ```
+
+          **🍎 macOS:**
+          ```bash
+          # Extract password_board_macos.zip
+          # Run Password Board.app
+          ```
+
+          **🌐 Web:**
+          ```bash
+          # Extract password_board_web.zip
+          # Serve with any web server
+          python -m http.server 8000
+          ```
+
+          ### Features:
+          - 🔐 Secure password management for MSPs
+          - 📋 One-click copy functionality
+          - 🔍 Advanced search and filtering
+          - 📊 Client organization
+          - 🎨 Modern Material Design 3 UI
+          - 🔄 Cross-platform compatibility
+
+          ### System Requirements:
+          - Linux: Ubuntu 18.04+ or compatible
+          - Windows: Windows 10 version 1903 or later
+          - macOS: macOS 10.14.6 or later
+          - Web: Any modern web browser
+
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
