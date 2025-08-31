@@ -750,21 +750,103 @@ class _PasswordBoardState extends State<PasswordBoard> {
   }
 
   Widget _buildPasswordDetails(PasswordEntry entry) {
+    final entryId = entry.id;
+    final showPassword = _showPasswords[entryId] ?? false;
+    final decryptedPassword = _decryptedPasswords[entryId] ?? '';
+
     return Container(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            entry.title,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with title and actions
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    entry.title,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () => _editPasswordEntry(entry),
+                      tooltip: 'Edit password',
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+                      onPressed: () => _deletePasswordEntry(entry),
+                      tooltip: 'Delete password',
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 16),
-          Text('Username: ${entry.username}'),
-          Text('Password: ${entry.encryptedPassword}'),
-        ],
+
+            const SizedBox(height: 24),
+
+            // Username field with hover-to-copy
+            _buildHoverCopyField(
+              label: 'Username',
+              value: entry.username,
+              icon: Icons.person,
+              fieldKey: 'username_$entryId',
+            ),
+            const SizedBox(height: 16),
+
+            // Password field with hover-to-copy and show/hide
+            _buildPasswordHoverCopyField(
+              label: 'Password',
+              value: decryptedPassword,
+              showPassword: showPassword,
+              entryId: entryId,
+            ),
+
+            const SizedBox(height: 24),
+
+            // Metadata
+            Text(
+              'Information',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetadataItem(
+                    'Type',
+                    _getPasswordTypeLabel(entry.type),
+                    Icons.category,
+                  ),
+                ),
+                Expanded(
+                  child: _buildMetadataItem(
+                    'Created',
+                    _formatDateTime(entry.createdAt),
+                    Icons.calendar_today,
+                  ),
+                ),
+                Expanded(
+                  child: _buildMetadataItem(
+                    'Updated',
+                    _formatDateTime(entry.updatedAt),
+                    Icons.update,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 24), // Bottom padding
+          ],
+        ),
       ),
     );
   }
