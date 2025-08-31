@@ -18,7 +18,7 @@ on:
 jobs:
   build-linux:
     name: Build Linux
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
@@ -78,7 +78,7 @@ jobs:
 
   build-windows:
     name: Build Windows
-    runs-on: windows-2022
+    runs-on: windows-latest
 
     steps:
     - name: Checkout code
@@ -126,7 +126,7 @@ jobs:
 
   build-macos:
     name: Build macOS
-    runs-on: macos-14
+    runs-on: macos-latest
 
     steps:
     - name: Checkout code
@@ -189,7 +189,7 @@ jobs:
   release:
     name: Create Release
     needs: [build-linux, build-windows, build-macos]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true') || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
 
     steps:
