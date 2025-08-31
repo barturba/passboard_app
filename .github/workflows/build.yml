@@ -96,7 +96,7 @@ jobs:
           cd build/linux/x64/release/bundle
           echo "Bundle size before compression:"
           du -sh .
-          tar -czf "${GITHUB_WORKSPACE}/password_board_linux.tar.gz" . --exclude="*.debug" --exclude="*.sym"
+          tar -czf "${GITHUB_WORKSPACE}/password_board_linux.tar.gz" --exclude="*.debug" --exclude="*.sym" .
           echo "Archive created successfully"
           ls -lh "${GITHUB_WORKSPACE}/password_board_linux.tar.gz"
         else
