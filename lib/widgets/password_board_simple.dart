@@ -750,20 +750,134 @@ class _PasswordBoardState extends State<PasswordBoard> {
   }
 
   Widget _buildPasswordDetails(PasswordEntry entry) {
+    final entryId = entry.id;
+    final showPassword = _showPasswords[entryId] ?? false;
+    final decryptedPassword = _decryptedPasswords[entryId] ?? '';
+
     return Container(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+          // Header with title and actions
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.title,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _getClientNameForEntry(entry),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () => _editPasswordEntry(entry),
+                    tooltip: 'Edit password',
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+                    onPressed: () => _deletePasswordEntry(entry),
+                    tooltip: 'Delete password',
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 32),
+
+          // Details section
           Text(
-            entry.title,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+            'Login Details',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 16),
-          Text('Username: ${entry.username}'),
-          Text('Password: ${entry.encryptedPassword}'),
+
+          // Username field with hover-to-copy
+          _buildHoverCopyField(
+            label: 'Username',
+            value: entry.username,
+            icon: Icons.person,
+            fieldKey: 'username_$entryId',
+          ),
+          const SizedBox(height: 16),
+
+          // Password field with hover-to-copy and show/hide
+          _buildPasswordHoverCopyField(
+            label: 'Password',
+            value: decryptedPassword,
+            showPassword: showPassword,
+            entryId: entryId,
+          ),
+          const SizedBox(height: 16),
+
+          // URL/Website field (if available in notes)
+          if (entry.notes != null && entry.notes!.isNotEmpty)
+            _buildHoverCopyField(
+              label: 'Notes',
+              value: entry.notes!,
+              icon: Icons.notes,
+              fieldKey: 'notes_$entryId',
+              maxLines: 3,
+            ),
+
+          const SizedBox(height: 32),
+
+          // Metadata
+          Text(
+            'Information',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetadataItem(
+                  'Type',
+                  _getPasswordTypeLabel(entry.type),
+                  Icons.category,
+                ),
+              ),
+              Expanded(
+                child: _buildMetadataItem(
+                  'Created',
+                  _formatDateTime(entry.createdAt),
+                  Icons.calendar_today,
+                ),
+              ),
+              Expanded(
+                child: _buildMetadataItem(
+                  'Updated',
+                  _formatDateTime(entry.updatedAt),
+                  Icons.update,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24), // Bottom padding for better scrolling experience
         ],
       ),
     );
