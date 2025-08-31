@@ -18,6 +18,8 @@ class _PasswordBoardState extends State<PasswordBoard> {
   String _searchQuery = '';
   final Map<String, bool> _showPasswords = {};
   final Map<String, String> _decryptedPasswords = {};
+  PasswordEntry? _selectedEntry;
+  final Map<String, bool> _hoveredFields = {};
 
   @override
   void initState() {
@@ -110,6 +112,7 @@ class _PasswordBoardState extends State<PasswordBoard> {
             onPressed: () {
               setState(() {
                 _decryptedPasswords.clear();
+                _selectedEntry = null;
               });
               _decryptAllPasswords();
             },
@@ -175,171 +178,103 @@ class _PasswordBoardState extends State<PasswordBoard> {
             ),
           ),
 
-          // Header row
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3))),
-            ),
-            child: const Row(
-              children: [
-                Expanded(flex: 3, child: Text('Title', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                Expanded(flex: 2, child: Text('Username', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                Expanded(flex: 2, child: Text('Password', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                Expanded(flex: 2, child: Text('Client', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                Expanded(flex: 1, child: Text('Type', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                SizedBox(width: 80, child: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-              ],
-            ),
-          ),
-
-          // Password entries
+          // Main content area
           Expanded(
-            child: ListView.builder(
-              itemCount: filteredEntries.length,
-              itemBuilder: (context, index) {
-                final entry = filteredEntries[index];
-                final entryId = entry.id;
-                final showPassword = _showPasswords[entryId] ?? false;
-                final decryptedPassword = _decryptedPasswords[entryId] ?? '';
-
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  decoration: BoxDecoration(
-                    border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.1))),
-                  ),
-                  child: Row(
-                    children: [
-                      // Title
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          entry.title,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
-                          overflow: TextOverflow.ellipsis,
+            child: Row(
+              children: [
+                // Left column: Password list
+                SizedBox(
+                  width: 300,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        right: BorderSide(
+                          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
                         ),
                       ),
+                    ),
+                    child: filteredEntries.isEmpty
+                        ? _buildEmptyListState()
+                        : ListView.builder(
+                            itemCount: filteredEntries.length,
+                            itemBuilder: (context, index) {
+                              final entry = filteredEntries[index];
+                              final isSelected = _selectedEntry?.id == entry.id;
 
-                      // Username
-                      Expanded(
-                        flex: 2,
-                        child: Row(
-                          children: [
-                            Icon(Icons.person, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                entry.username,
-                                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.copy, size: 14),
-                              onPressed: () => _copyToClipboard(entry.username, 'Username copied'),
-                              tooltip: 'Copy username',
-                              visualDensity: VisualDensity.compact,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Password
-                      Expanded(
-                        flex: 2,
-                        child: Row(
-                          children: [
-                            Icon(Icons.lock, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                showPassword && decryptedPassword.isNotEmpty
-                                    ? decryptedPassword
-                                    : '•' * (decryptedPassword.isNotEmpty ? decryptedPassword.length : 8),
-                                style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                showPassword ? Icons.visibility_off : Icons.visibility,
-                                size: 14,
-                              ),
-                              onPressed: decryptedPassword.isNotEmpty ? () {
-                                setState(() {
-                                  _showPasswords[entryId] = !(_showPasswords[entryId] ?? false);
-                                });
-                              } : null,
-                              tooltip: showPassword ? 'Hide password' : 'Show password',
-                              visualDensity: VisualDensity.compact,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.copy, size: 14),
-                              onPressed: decryptedPassword.isNotEmpty
-                                  ? () => _copyToClipboard(decryptedPassword, 'Password copied')
-                                  : null,
-                              tooltip: 'Copy password',
-                              visualDensity: VisualDensity.compact,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Client
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          _getClientNameForEntry(entry),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              return InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedEntry = entry;
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+                                        : null,
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+                                      ),
+                                    ),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        entry.title,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: isSelected
+                                              ? Theme.of(context).colorScheme.primary
+                                              : Theme.of(context).colorScheme.onSurface,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        entry.username,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                          fontFamily: 'monospace',
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            _getClientNameForEntry(entry),
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          _buildCompactTypeChip(entry.type),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-
-                      // Type
-                      Expanded(
-                        flex: 1,
-                        child: _buildCompactTypeChip(entry.type),
-                      ),
-
-                      // Actions
-                      SizedBox(
-                        width: 80,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit, size: 16),
-                              onPressed: () => _editPasswordEntry(entry),
-                              tooltip: 'Edit',
-                              visualDensity: VisualDensity.compact,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.delete, size: 16, color: Theme.of(context).colorScheme.error),
-                              onPressed: () => _deletePasswordEntry(entry),
-                              tooltip: 'Delete',
-                              visualDensity: VisualDensity.compact,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                   ),
-                );
-              },
+                ),
+
+                // Right column: Password details
+                Expanded(
+                  child: _selectedEntry != null
+                      ? _buildPasswordDetails(_selectedEntry!)
+                      : _buildEmptySelectionState(),
+                ),
+              ],
             ),
           ),
         ],
@@ -755,6 +690,436 @@ class _PasswordBoardState extends State<PasswordBoard> {
       return '${difference.inDays}d ago';
     } else {
       return '${mostRecent.month}/${mostRecent.day}/${mostRecent.year}';
+    }
+  }
+
+  Widget _buildEmptyListState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.lock_outline,
+            size: 64,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No passwords yet',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Click the + button to add your first password',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptySelectionState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.arrow_left,
+            size: 48,
+            color: Theme.of(context).colorScheme.outline,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Select a password',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Choose a password from the list to view details',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPasswordDetails(PasswordEntry entry) {
+    final entryId = entry.id;
+    final showPassword = _showPasswords[entryId] ?? false;
+    final decryptedPassword = _decryptedPasswords[entryId] ?? '';
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with title and actions
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.title,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _getClientNameForEntry(entry),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () => _editPasswordEntry(entry),
+                    tooltip: 'Edit password',
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete, color: Theme.of(context).colorScheme.error),
+                    onPressed: () => _deletePasswordEntry(entry),
+                    tooltip: 'Delete password',
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 32),
+
+          // Details section
+          Text(
+            'Login Details',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Username field with hover-to-copy
+          _buildHoverCopyField(
+            label: 'Username',
+            value: entry.username,
+            icon: Icons.person,
+            fieldKey: 'username_$entryId',
+          ),
+          const SizedBox(height: 16),
+
+          // Password field with hover-to-copy and show/hide
+          _buildPasswordHoverCopyField(
+            label: 'Password',
+            value: decryptedPassword,
+            showPassword: showPassword,
+            entryId: entryId,
+          ),
+          const SizedBox(height: 16),
+
+          // URL/Website field (if available in notes)
+          if (entry.notes != null && entry.notes!.isNotEmpty)
+            _buildHoverCopyField(
+              label: 'Notes',
+              value: entry.notes!,
+              icon: Icons.notes,
+              fieldKey: 'notes_$entryId',
+              maxLines: 3,
+            ),
+
+          const SizedBox(height: 32),
+
+          // Metadata
+          Text(
+            'Information',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetadataItem(
+                  'Type',
+                  _getPasswordTypeLabel(entry.type),
+                  Icons.category,
+                ),
+              ),
+              Expanded(
+                child: _buildMetadataItem(
+                  'Created',
+                  _formatDateTime(entry.createdAt),
+                  Icons.calendar_today,
+                ),
+              ),
+              Expanded(
+                child: _buildMetadataItem(
+                  'Updated',
+                  _formatDateTime(entry.updatedAt),
+                  Icons.update,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHoverCopyField({
+    required String label,
+    required String value,
+    required IconData icon,
+    required String fieldKey,
+    int maxLines = 1,
+  }) {
+    final isHovered = _hoveredFields[fieldKey] ?? false;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredFields[fieldKey] = true),
+      onExit: (_) => setState(() => _hoveredFields[fieldKey] = false),
+      child: GestureDetector(
+        onTap: () => _copyToClipboard(value, '$label copied'),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isHovered
+                ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+                : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isHovered
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+                  : Theme.of(context).colorScheme.outline.withOpacity(0.2),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontFamily: maxLines == 1 ? 'monospace' : null,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      maxLines: maxLines,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              if (isHovered)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    'Copy',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPasswordHoverCopyField({
+    required String label,
+    required String value,
+    required bool showPassword,
+    required String entryId,
+  }) {
+    final fieldKey = 'password_$entryId';
+    final isHovered = _hoveredFields[fieldKey] ?? false;
+    final displayValue = showPassword && value.isNotEmpty
+        ? value
+        : '•' * (value.isNotEmpty ? value.length : 8);
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredFields[fieldKey] = true),
+      onExit: (_) => setState(() => _hoveredFields[fieldKey] = false),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isHovered
+              ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isHovered
+                ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+                : Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.lock,
+              size: 20,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    displayValue,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontFamily: 'monospace',
+                      color: Color(0xFF2E7D32), // Password green color
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              children: [
+                if (isHovered && value.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'Copy',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                    ),
+                  ),
+                IconButton(
+                  icon: Icon(
+                    showPassword ? Icons.visibility_off : Icons.visibility,
+                    size: 18,
+                  ),
+                  onPressed: value.isNotEmpty ? () {
+                    setState(() {
+                      _showPasswords[entryId] = !(_showPasswords[entryId] ?? false);
+                    });
+                  } : null,
+                  tooltip: showPassword ? 'Hide password' : 'Show password',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetadataItem(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays == 0) {
+      return 'Today';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else {
+      return '${dateTime.month}/${dateTime.day}/${dateTime.year}';
     }
   }
 
