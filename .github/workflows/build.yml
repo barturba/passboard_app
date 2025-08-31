@@ -53,9 +53,9 @@ jobs:
         if [ -d "build/linux/x64/release/bundle" ]; then
           echo "Creating Linux archive..."
           cd build/linux/x64/release/bundle
-          tar -czf ../../../../password_board_linux.tar.gz .
+          tar -czf "${GITHUB_WORKSPACE}/password_board_linux.tar.gz" .
           echo "Archive created successfully"
-          ls -la ../../../../password_board_linux.tar.gz
+          ls -la "${GITHUB_WORKSPACE}/password_board_linux.tar.gz"
         else
           echo "Linux bundle directory not found, checking alternatives..."
           find build/linux/ -name "*" -type d | grep -i release || echo "No release directories found"
@@ -101,9 +101,9 @@ jobs:
         if (Test-Path "build/windows/x64/runner/Release") {
           echo "Creating Windows archive..."
           cd build/windows/x64/runner/Release
-          Compress-Archive -Path . -DestinationPath ../../../../password_board_windows.zip -Force
+          Compress-Archive -Path . -DestinationPath "${env:GITHUB_WORKSPACE}/password_board_windows.zip" -Force
           echo "Archive created successfully"
-          Get-Item ../../../../password_board_windows.zip
+          Get-Item "${env:GITHUB_WORKSPACE}/password_board_windows.zip"
         } else {
           echo "Windows Release directory not found, checking alternatives..."
           Get-ChildItem build/windows/ -Recurse -Directory | Where-Object { $_.Name -like "*Release*" -or $_.Name -like "*release*" }
@@ -155,9 +155,10 @@ jobs:
           APP_NAME=$(ls -d *.app 2>/dev/null | head -n1)
           if [ -n "$APP_NAME" ]; then
             echo "Found app: $APP_NAME"
-            zip -r ../../../../password_board_macos.zip "$APP_NAME"
+            # Create archive in repository root
+            zip -r "${GITHUB_WORKSPACE}/password_board_macos.zip" "$APP_NAME"
             echo "Archive created successfully"
-            ls -la ../../../../password_board_macos.zip
+            ls -la "${GITHUB_WORKSPACE}/password_board_macos.zip"
           else
             echo "Error: No .app files found in Release directory"
             ls -la
@@ -207,9 +208,9 @@ jobs:
         if [ -d "build/linux/x64/release/bundle" ]; then
           echo "Creating Linux archive..."
           cd build/linux/x64/release/bundle
-          tar -czf ../../../../password_board_linux_selfhosted.tar.gz .
+          tar -czf "${GITHUB_WORKSPACE}/password_board_linux_selfhosted.tar.gz" .
           echo "Archive created successfully"
-          ls -la ../../../../password_board_linux_selfhosted.tar.gz
+          ls -la "${GITHUB_WORKSPACE}/password_board_linux_selfhosted.tar.gz"
         else
           echo "Linux bundle directory not found, checking alternatives..."
           find build/linux/ -name "*" -type d | grep -i release || echo "No release directories found"
@@ -256,9 +257,9 @@ jobs:
         if (Test-Path "build/windows/x64/runner/Release") {
           echo "Creating Windows archive..."
           cd build/windows/x64/runner/Release
-          Compress-Archive -Path . -DestinationPath ../../../../password_board_windows_selfhosted.zip -Force
+          Compress-Archive -Path . -DestinationPath "${env:GITHUB_WORKSPACE}/password_board_windows_selfhosted.zip" -Force
           echo "Archive created successfully"
-          Get-Item ../../../../password_board_windows_selfhosted.zip
+          Get-Item "${env:GITHUB_WORKSPACE}/password_board_windows_selfhosted.zip"
         } else {
           echo "Windows Release directory not found, checking alternatives..."
           Get-ChildItem build/windows/ -Recurse -Directory | Where-Object { $_.Name -like "*Release*" -or $_.Name -like "*release*" }
@@ -311,9 +312,9 @@ jobs:
           APP_NAME=$(ls -d *.app 2>/dev/null | head -n1)
           if [ -n "$APP_NAME" ]; then
             echo "Found app: $APP_NAME"
-            zip -r ../../../../password_board_macos_selfhosted.zip "$APP_NAME"
+            zip -r "${GITHUB_WORKSPACE}/password_board_macos_selfhosted.zip" "$APP_NAME"
             echo "Archive created successfully"
-            ls -la ../../../../password_board_macos_selfhosted.zip
+            ls -la "${GITHUB_WORKSPACE}/password_board_macos_selfhosted.zip"
           else
             echo "Error: No .app files found in Release directory"
             ls -la
