@@ -178,67 +178,11 @@ jobs:
 
 
 
-  build-macos-self-hosted:
-    name: Build macOS (Self-Hosted)
-    runs-on: self-hosted
-    if: contains(github.event.head_commit.message, '[self-hosted]') || github.event_name == 'workflow_dispatch'
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.35.2'
-        channel: 'stable'
-        cache: true
-
-    - name: Enable macOS desktop
-      run: flutter config --enable-macos-desktop
-
-    - name: Install dependencies
-      run: flutter pub get
-
-    - name: Build macOS release
-      run: flutter build macos --release
-
-    - name: Create macOS archive
-      run: |
-        echo "Checking macOS build directory structure..."
-        ls -la build/macos/Build/Products/ || echo "Build directory not found"
-        if [ -d "build/macos/Build/Products/Release" ]; then
-          echo "Creating macOS archive..."
-          cd build/macos/Build/Products/Release
-          ls -la *.app || echo "No .app files found"
-
-          # Find the actual app name
-          APP_NAME=$(ls -d *.app 2>/dev/null | head -n1)
-          if [ -n "$APP_NAME" ]; then
-            echo "Found app: $APP_NAME"
-            zip -r "${GITHUB_WORKSPACE}/password_board_macos_selfhosted.zip" "$APP_NAME"
-            echo "Archive created successfully"
-            ls -la "${GITHUB_WORKSPACE}/password_board_macos_selfhosted.zip"
-          else
-            echo "Error: No .app files found in Release directory"
-            ls -la
-            exit 1
-          fi
-        else
-          echo "Error: macOS build directory not found"
-          exit 1
-        fi
-
-    - name: Upload macOS build (Self-Hosted)
-      uses: actions/upload-artifact@v4
-      with:
-        name: password-board-macos-selfhosted
-        path: password_board_macos_selfhosted.zip
-        retention-days: 30
 
   release:
     name: Create Release
-    needs: [build-linux, build-windows, build-macos, build-macos-self-hosted]
+    needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
 
@@ -264,10 +208,9 @@ jobs:
           This release contains builds for all supported platforms:
 
           ### Downloads:
-          - **Linux (GitHub)**: `password_board_linux.tar.gz`
-          - **Windows (GitHub)**: `password_board_windows.zip`
-          - **macOS (GitHub)**: `password_board_macos.zip`
-          - **macOS (Self-Hosted)**: `password_board_macos_selfhosted.zip`
+          - **Linux**: `password_board_linux.tar.gz`
+          - **Windows**: `password_board_windows.zip`
+          - **macOS**: `password_board_macos.zip`
 
           ### Installation Instructions:
 
