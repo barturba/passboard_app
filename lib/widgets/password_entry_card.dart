@@ -191,75 +191,60 @@ class _PasswordEntryCardState extends State<PasswordEntryCard> {
 
   Widget _buildPasswordField(BuildContext context) {
     final hasDecryptedPassword = widget.decryptedPassword != null && widget.decryptedPassword!.isNotEmpty;
-    final displayPassword = hasDecryptedPassword ? widget.decryptedPassword! : '••••••••';
-    final actualPassword = hasDecryptedPassword ? widget.decryptedPassword! : '';
+    final maskedPassword = '•' * (hasDecryptedPassword ? widget.decryptedPassword!.length : 8);
 
     return Row(
       children: [
         Icon(
           Icons.lock,
-          size: 20,
+          size: 16,
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 4),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              Text(
-                'Password',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
+              Expanded(
+                child: Text(
+                  _showPassword
+                      ? (hasDecryptedPassword ? widget.decryptedPassword! : 'No password')
+                      : maskedPassword,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _showPassword ? (hasDecryptedPassword ? actualPassword : 'No password available') : displayPassword,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontFamily: 'monospace',
-                        color: _showPassword && hasDecryptedPassword
-                            ? Theme.of(context).colorScheme.primary
-                            : null,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      _showPassword ? Icons.visibility_off : Icons.visibility,
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _showPassword = !_showPassword;
-                        // Debug print to verify toggle is working
-                        print('Password visibility toggled: $_showPassword');
-                      });
-                    },
-                    tooltip: _showPassword ? 'Hide password' : 'Show password',
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.copy, size: 20),
-                    onPressed: hasDecryptedPassword
-                        ? () => _copyToClipboard(actualPassword, 'Password copied')
-                        : null,
-                    tooltip: hasDecryptedPassword ? 'Copy password' : 'Password not available',
-                    visualDensity: VisualDensity.compact,
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(
-                      minWidth: 32,
-                      minHeight: 32,
-                    ),
-                  ),
-                ],
+              IconButton(
+                icon: Icon(
+                  _showPassword ? Icons.visibility_off : Icons.visibility,
+                  size: 16,
+                ),
+                onPressed: hasDecryptedPassword ? () {
+                  setState(() {
+                    _showPassword = !_showPassword;
+                  });
+                } : null,
+                tooltip: _showPassword ? 'Hide password' : 'Show password',
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 24,
+                  minHeight: 24,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.copy, size: 16),
+                onPressed: hasDecryptedPassword
+                    ? () => _copyToClipboard(widget.decryptedPassword!, 'Password copied')
+                    : null,
+                tooltip: 'Copy password',
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(
+                  minWidth: 24,
+                  minHeight: 24,
+                ),
               ),
             ],
           ),
@@ -273,10 +258,10 @@ class _PasswordEntryCardState extends State<PasswordEntryCard> {
     final typeColor = _getPasswordTypeColor(widget.entry.type, context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: typeColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: typeColor.withOpacity(0.3)),
       ),
       child: Text(
@@ -284,6 +269,7 @@ class _PasswordEntryCardState extends State<PasswordEntryCard> {
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: typeColor,
           fontWeight: FontWeight.w500,
+          fontSize: 11,
         ),
       ),
     );

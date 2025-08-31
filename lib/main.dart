@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'screens/dashboard_screen.dart';
+import 'widgets/password_board.dart';
 import 'services/services.dart';
 import 'providers/app_provider.dart';
 
@@ -67,7 +67,7 @@ class PasswordBoardApp extends StatelessWidget {
           shape: CircleBorder(),
         ),
       ),
-      home: const DashboardScreen(),
+      home: const PasswordBoard(),
     );
   }
 }

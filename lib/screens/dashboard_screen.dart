@@ -5,6 +5,7 @@ import '../providers/app_provider.dart';
 import '../widgets/client_card.dart';
 import '../widgets/add_client_dialog.dart';
 import '../widgets/search_bar.dart';
+import '../widgets/password_board.dart';
 import 'client_detail_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -25,6 +26,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.grid_view),
+            onPressed: _showPasswordBoard,
+            tooltip: 'Password Board View',
+          ),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: _showSearch,
@@ -147,6 +153,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // TODO: Navigate to settings screen
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Settings screen coming soon!')),
+    );
+  }
+
+  void _showPasswordBoard() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const PasswordBoard(),
+      ),
     );
   }
 
