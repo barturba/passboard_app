@@ -53,16 +53,16 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          /usr/local/lib
-          /usr/local/include
-        key: linux-sys-deps-${{ hashFiles('**/pubspec.lock') }}
+          /var/cache/apt/archives/*.deb
+          /var/lib/apt/lists/*
+        key: linux-apt-${{ hashFiles('**/pubspec.lock') }}
         restore-keys: |
-          linux-sys-deps-
+          linux-apt-
 
     - name: Install Linux dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install -y \
+        sudo apt-get update --quiet
+        sudo apt-get install -y --no-install-recommends \
           clang \
           cmake \
           ninja-build \
@@ -75,10 +75,17 @@ jobs:
       run: flutter config --enable-linux-desktop
 
     - name: Install dependencies
-      run: flutter pub get
+      run: |
+        echo "Installing Flutter dependencies..."
+        flutter pub get --verbose
 
     - name: Build Linux release
-      run: flutter build linux --release
+      run: |
+        echo "Starting Flutter build..."
+        time flutter build linux --release
+      timeout-minutes: 20
+      env:
+        FLUTTER_BUILD_MODE: release
 
     - name: Create Linux archive
       run: |
@@ -87,9 +94,11 @@ jobs:
         if [ -d "build/linux/x64/release/bundle" ]; then
           echo "Creating Linux archive..."
           cd build/linux/x64/release/bundle
-          tar -czf "${GITHUB_WORKSPACE}/password_board_linux.tar.gz" .
+          echo "Bundle size before compression:"
+          du -sh .
+          tar -czf "${GITHUB_WORKSPACE}/password_board_linux.tar.gz" . --exclude="*.debug" --exclude="*.sym"
           echo "Archive created successfully"
-          ls -la "${GITHUB_WORKSPACE}/password_board_linux.tar.gz"
+          ls -lh "${GITHUB_WORKSPACE}/password_board_linux.tar.gz"
         else
           echo "Linux bundle directory not found, checking alternatives..."
           find build/linux/ -name "*" -type d | grep -i release || echo "No release directories found"
@@ -134,10 +143,15 @@ jobs:
       run: flutter config --enable-windows-desktop
 
     - name: Install dependencies
-      run: flutter pub get
+      run: |
+        echo "Installing Flutter dependencies..."
+        flutter pub get
 
     - name: Build Windows release
-      run: flutter build windows --release
+      run: |
+        echo "Starting Flutter Windows build..."
+        flutter build windows --release
+      timeout-minutes: 15
 
     - name: Create Windows archive
       run: |
@@ -194,10 +208,15 @@ jobs:
       run: flutter config --enable-macos-desktop
 
     - name: Install dependencies
-      run: flutter pub get
+      run: |
+        echo "Installing Flutter dependencies..."
+        flutter pub get
 
     - name: Build macOS release
-      run: flutter build macos --release
+      run: |
+        echo "Starting Flutter macOS build..."
+        flutter build macos --release
+      timeout-minutes: 15
 
     - name: Create macOS archive
       run: |
