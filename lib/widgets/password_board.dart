@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../services/services.dart';
+import 'add_password_dialog.dart';
 
 class PasswordBoard extends StatefulWidget {
   const PasswordBoard({super.key});
