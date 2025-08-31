@@ -180,7 +180,7 @@ The project includes automated CI/CD via GitHub Actions (`.github/workflows/buil
 
 The project supports both GitHub-hosted and self-hosted runners for maximum flexibility and control.
 
-### Setting Up Self-Hosted Runners
+### Setting Up Self-Hosted macOS Runner
 
 1. **Go to Repository Settings:**
    - Navigate to your repository on GitHub
@@ -188,39 +188,26 @@ The project supports both GitHub-hosted and self-hosted runners for maximum flex
 
 2. **Add New Runner:**
    - Click **"New self-hosted runner"**
-   - Choose your platform (Linux, Windows, macOS)
+   - Choose **macOS** platform
    - Follow the setup instructions
 
-3. **Install Dependencies:**
+3. **Install Dependencies on macOS:**
 
-   **Linux:**
-   ```bash
-   # Install Flutter
-   sudo snap install flutter --classic
-
-   # Install build dependencies
-   sudo apt-get update
-   sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev libblkid-dev liblzma-dev
-   ```
-
-   **macOS:**
    ```bash
    # Install Flutter
    brew install flutter
 
-   # Install CocoaPods
+   # Install CocoaPods (required for macOS builds)
    sudo gem install cocoapods
-   ```
 
-   **Windows:**
-   ```powershell
-   # Install Flutter from official installer
-   # Install Visual Studio Build Tools with Desktop development workload
+   # Verify installations
+   flutter --version
+   pod --version
    ```
 
 4. **Configure Runner:**
    - Start the runner service
-   - Add appropriate labels (e.g., `self-hosted`, `linux`, `windows`, `macos`)
+   - Add labels: `self-hosted`, `macos`
 
 ### Using Self-Hosted Builds
 
@@ -249,9 +236,7 @@ git commit -m "Add new feature [self-hosted]"
 ### Build Artifacts
 
 Self-hosted builds create artifacts with `_selfhosted` suffix:
-- `password_board_linux_selfhosted.tar.gz`
-- `password_board_windows_selfhosted.zip`
-- `password_board_macos_selfhosted.zip`
+- `password_board_macos_selfhosted.zip` (macOS only)
 
 ## 📊 Build Information
 
