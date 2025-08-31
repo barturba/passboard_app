@@ -16,8 +16,26 @@ on:
         default: false
 
 jobs:
+  extract-version:
+    name: Extract Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Get version from pubspec.yaml
+      id: get_version
+      run: |
+        VERSION=$(sed -n 's/^version: \([0-9]*\.[0-9]*\.[0-9]*\).*/\1/p' pubspec.yaml)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Extracted version: $VERSION"
+
   build-linux:
     name: Build Linux
+    needs: extract-version
     runs-on: ubuntu-latest
 
     steps:
@@ -78,6 +96,7 @@ jobs:
 
   build-windows:
     name: Build Windows
+    needs: extract-version
     runs-on: windows-latest
 
     steps:
@@ -126,6 +145,7 @@ jobs:
 
   build-macos:
     name: Build macOS
+    needs: extract-version
     runs-on: macos-latest
 
     steps:
@@ -188,7 +208,7 @@ jobs:
 
   release:
     name: Create Release
-    needs: [build-linux, build-windows, build-macos]
+    needs: [extract-version, build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
     if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == 'true') || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
 
@@ -208,60 +228,22 @@ jobs:
         # List files to verify
         ls -la *.tar.gz *.zip
 
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v1
+    - name: Draft release with release-drafter
+      id: draft_release
+      uses: release-drafter/release-drafter@v6
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        files: |
-          password_board_linux.tar.gz
-          password_board_windows.zip
-          password_board_macos.zip
-        tag_name: build-${{ github.run_number }}
-        name: Password Board Build #${{ github.run_number }}
-        draft: true
-        prerelease: true
-        body: |
-          ## Password Board - Multi-Platform Release
+        tag: v${{ needs.extract-version.outputs.version }}
+        name: v${{ needs.extract-version.outputs.version }}
 
-          This release contains individual downloads for each supported platform:
-
-          ### Downloads:
-          - **🐧 Linux**: `password_board_linux.tar.gz` (Direct download)
-          - **🪟 Windows**: `password_board_windows.zip` (Direct download)
-          - **🍎 macOS**: `password_board_macos.zip` (Direct download)
-
-          ### Installation Instructions:
-
-          **🐧 Linux:**
-          ```bash
-          tar -xzf password_board_linux.tar.gz
-          cd password_board
-          ./password_board
-          ```
-
-          **🪟 Windows:**
-          ```cmd
-          # Extract password_board_windows.zip
-          # Run password_board.exe
-          ```
-
-          **🍎 macOS:**
-          ```bash
-          # Extract password_board_macos.zip
-          # Run passboard_app.app
-          ```
-
-          ### Features:
-          - 🔐 Secure password management for MSPs
-          - 📋 One-click copy functionality
-          - 🔍 Advanced search and filtering
-          - 📊 Client organization
-          - 🎨 Modern Material Design 3 UI
-          - 🔄 Cross-platform compatibility
-
-          ### System Requirements:
-          - Linux: Ubuntu 18.04+ or compatible
-          - Windows: Windows 10 version 1903 or later
-          - macOS: macOS 10.14.6 or later
-
-    env:
-      GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+    - name: Upload Release Assets
+      run: |
+        # Upload Linux build
+        gh release upload v${{ needs.extract-version.outputs.version }} password_board_linux.tar.gz --clobber
+        # Upload Windows build
+        gh release upload v${{ needs.extract-version.outputs.version }} password_board_windows.zip --clobber
+        # Upload macOS build
+        gh release upload v${{ needs.extract-version.outputs.version }} password_board_macos.zip --clobber
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
