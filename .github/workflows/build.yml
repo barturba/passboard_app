@@ -184,7 +184,7 @@ jobs:
     name: Create Release
     needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
 
     steps:
     - name: Download all build artifacts
@@ -202,6 +202,10 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: password-board-complete.zip
+        tag_name: ${{ github.event_name == 'release' && github.event.release.tag_name || format('v{0}-{1}', github.run_number, github.run_attempt) }}
+        name: ${{ github.event_name == 'release' && github.event.release.name || format('Password Board Build #{0}', github.run_number) }}
+        draft: ${{ github.event_name == 'workflow_dispatch' }}
+        prerelease: ${{ github.event_name == 'workflow_dispatch' }}
         body: |
           ## Password Board - Multi-Platform Release
 
