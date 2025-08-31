@@ -11,6 +11,10 @@ void main() async {
   final storageService = await StorageService.initialize();
   final encryptionService = EncryptionService();
 
+  // Set a default master password for demonstration
+  // In a real app, you'd have a proper master password setup flow
+  encryptionService.setMasterPassword('demo_master_password_2024');
+
   runApp(
     MultiProvider(
       providers: [

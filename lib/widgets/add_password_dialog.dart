@@ -39,9 +39,23 @@ class _AddPasswordDialogState extends State<AddPasswordDialog> {
       _selectedType = entry.type;
       _notesController.text = entry.notes ?? '';
 
-      // TODO: In a real implementation, you'd decrypt the password here
-      // For now, we'll leave it empty for editing
+      // Password decryption will be handled in didChangeDependencies
       _passwordController.text = '';
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.passwordEntry != null && _passwordController.text.isEmpty) {
+      // Decrypt the password for editing
+      try {
+        final encryptionService = context.read<EncryptionService>();
+        _passwordController.text = encryptionService.decryptPassword(widget.passwordEntry!.encryptedPassword);
+      } catch (e) {
+        // If decryption fails, leave the field empty
+        _passwordController.text = '';
+      }
     }
   }
 
@@ -192,9 +206,8 @@ class _AddPasswordDialogState extends State<AddPasswordDialog> {
 
       final encryptionService = context.read<EncryptionService>();
 
-      // TODO: In a real implementation, you'd encrypt the password here
-      // For now, we'll store it as-is for demonstration
-      final encryptedPassword = password; // encryptionService.encryptPassword(password);
+      // Encrypt the password before storing
+      final encryptedPassword = encryptionService.encryptPassword(password);
 
       if (widget.passwordEntry != null) {
         // Update existing password entry

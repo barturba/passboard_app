@@ -23,18 +23,25 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
   void initState() {
     super.initState();
     _client = widget.client;
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     _decryptPasswords();
   }
 
   Future<void> _decryptPasswords() async {
     final encryptionService = context.read<EncryptionService>();
 
-    // TODO: In a real implementation, you'd set the master password first
-    // For now, we'll assume passwords are already decrypted or show placeholders
+    // Decrypt passwords for display
     for (final entry in _client.passwordEntries) {
-      // In a real app, you'd decrypt here:
-      // _decryptedPasswords[entry.id] = encryptionService.decryptPassword(entry.encryptedPassword);
-      _decryptedPasswords[entry.id] = 'demo_password_${entry.id.substring(0, 8)}';
+      try {
+        _decryptedPasswords[entry.id] = encryptionService.decryptPassword(entry.encryptedPassword);
+      } catch (e) {
+        // If decryption fails, show a placeholder
+        _decryptedPasswords[entry.id] = '••••••••';
+      }
     }
 
     setState(() {});
