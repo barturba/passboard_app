@@ -257,4 +257,4 @@ jobs:
           - macOS: macOS 10.14.6 or later
 
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
