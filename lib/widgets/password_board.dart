@@ -300,9 +300,36 @@ class _PasswordBoardState extends State<PasswordBoard> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Password Board'),
+        title: Row(
+          children: [
+            const Text('Password Board'),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Container(
+                height: 36,
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Search...',
+                    prefixIcon: const Icon(Icons.search, size: 18),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.surface.withOpacity(0.8),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    isDense: true,
+                  ),
+                  style: const TextStyle(fontSize: 14),
+                ),
+              ),
+            ),
+          ],
+        ),
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+        toolbarHeight: 56,
         actions: [
           IconButton(
             icon: _isDecrypting
@@ -342,47 +369,6 @@ class _PasswordBoardState extends State<PasswordBoard> {
       ),
       body: Column(
         children: [
-          // Statistics bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: Theme.of(context).colorScheme.surfaceContainerHighest,
-            child: Row(
-              children: [
-                _buildStatItem('${clients.length}', 'Clients'),
-                const SizedBox(width: 24),
-                _buildStatItem('${allEntries.length}', 'Passwords'),
-                const SizedBox(width: 24),
-                _buildStatItem('${filteredEntries.length}', 'Showing'),
-                const Spacer(),
-                Text(
-                  'Last updated: ${_formatLastUpdate()}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search passwords...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-            ),
-          ),
-
           // Main content area
           Expanded(
             child: Row(
