@@ -18,7 +18,7 @@ on:
 jobs:
   extract-version:
     name: Extract Version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       version: ${{ steps.get_version.outputs.version }}
 
@@ -36,7 +36,7 @@ jobs:
   build-linux:
     name: Build Linux
     needs: extract-version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout code
@@ -48,6 +48,16 @@ jobs:
         flutter-version: '3.35.2'
         channel: 'stable'
         cache: true
+
+    - name: Cache system dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          /usr/local/lib
+          /usr/local/include
+        key: linux-sys-deps-${{ hashFiles('**/pubspec.lock') }}
+        restore-keys: |
+          linux-sys-deps-
 
     - name: Install Linux dependencies
       run: |
@@ -97,7 +107,7 @@ jobs:
   build-windows:
     name: Build Windows
     needs: extract-version
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
     - name: Checkout code
@@ -109,6 +119,16 @@ jobs:
         flutter-version: '3.35.2'
         channel: 'stable'
         cache: true
+
+    - name: Cache Windows dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          C:\ProgramData\Microsoft\Windows\Start Menu\Programs
+          C:\Windows\System32
+        key: windows-sys-deps-${{ hashFiles('**/pubspec.lock') }}
+        restore-keys: |
+          windows-sys-deps-
 
     - name: Enable Windows desktop
       run: flutter config --enable-windows-desktop
@@ -146,7 +166,7 @@ jobs:
   build-macos:
     name: Build macOS
     needs: extract-version
-    runs-on: macos-latest
+    runs-on: macos-13
 
     steps:
     - name: Checkout code
@@ -158,6 +178,17 @@ jobs:
         flutter-version: '3.35.2'
         channel: 'stable'
         cache: true
+
+    - name: Cache macOS dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          /usr/local/lib
+          /usr/local/include
+          /Library/Developer/CommandLineTools
+        key: macos-sys-deps-${{ hashFiles('**/pubspec.lock') }}
+        restore-keys: |
+          macos-sys-deps-
 
     - name: Enable macOS desktop
       run: flutter config --enable-macos-desktop
@@ -209,7 +240,7 @@ jobs:
   release:
     name: Create Release
     needs: [extract-version, build-linux, build-windows, build-macos]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
       pull-requests: write
