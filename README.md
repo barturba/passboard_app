@@ -1,10 +1,10 @@
 # Password Board
 
-Enterprise password management tool for organizations (Managed Service Providers).
+Professional password management tool for organizations and teams.
 
 ## 🎯 Overview
 
-Password Board is a desktop application that helps organizations organize and manage passwords for multiple clients. Store credentials securely, categorize by client and password type, and access them with one-click copy functionality.
+Password Board is a desktop application that helps organizations organize and manage passwords for multiple clients or departments. Store credentials securely, categorize by client and password type, and access them with one-click copy functionality.
 
 ## ✨ Features
 
@@ -118,4 +118,4 @@ Private repository - All rights reserved.
 
 ---
 
-**Built for organizations, by organizations.** 🔐
+**Built for organizations, by developers.** 🔐

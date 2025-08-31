@@ -195,7 +195,7 @@ git remote add origin NEW_REPOSITORY_URL
 Once pushed successfully, you'll have:
 - ✅ **Private repository** with your Password Board app
 - ✅ **Version control** for all your code
-- ✅ **Backup** of your professional password tool
+- ✅ **Backup** of your professional password management tool
 - ✅ **Collaboration ready** if you add team members
 - ✅ **CI/CD pipeline** for automated builds
 

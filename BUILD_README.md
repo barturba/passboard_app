@@ -192,7 +192,7 @@ The project includes automated CI/CD via GitHub Actions (`.github/workflows/buil
 
 ## 🎯 Distribution
 
-### For professional Clients
+### For Professional Clients
 1. Choose the appropriate platform archive
 2. Extract the archive
 3. Run the executable/application

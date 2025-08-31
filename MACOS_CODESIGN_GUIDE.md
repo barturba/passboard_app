@@ -102,7 +102,7 @@ For distribution outside the App Store, you'll also need notarization:
 
 ## 🚨 Important Notes
 
-### For professional password Use:
+### For Professional Use:
 - **Always use proper code signing** for client deployments
 - **Never distribute unsigned apps** to production environments
 - **Consider managed certificates** for team development
@@ -135,4 +135,4 @@ For distribution outside the App Store, you'll also need notarization:
 2. Certificate not properly installed
 3. Missing Apple Developer Program membership
 
-**For professional enterprise use, proper code signing is essential for security and trust.** 🔐
+**For professional use, proper code signing is essential for security and trust.** 🔐
