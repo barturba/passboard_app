@@ -20,15 +20,22 @@ class _PasswordBoardState extends State<PasswordBoard> {
   final Map<String, String> _decryptedPasswords = {};
   PasswordEntry? _selectedEntry;
   final Map<String, bool> _hoveredFields = {};
+  bool _isDecrypting = false;
 
   @override
   void initState() {
     super.initState();
-    _decryptAllPasswords();
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase();
       });
+    });
+
+    // Ensure passwords are loaded after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_decryptedPasswords.isEmpty) {
+        _ensurePasswordsDecrypted();
+      }
     });
   }
 
@@ -41,26 +48,46 @@ class _PasswordBoardState extends State<PasswordBoard> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Refresh decrypted passwords when dependencies change
-    _decryptAllPasswords();
+    // Ensure passwords are decrypted when dependencies change
+    _ensurePasswordsDecrypted();
+  }
+
+  Future<void> _ensurePasswordsDecrypted() async {
+    final clients = context.read<AppProvider>().clients;
+    final totalEntries = clients.fold(0, (sum, client) => sum + client.passwordEntries.length);
+
+    // Only decrypt if we haven't decrypted all entries yet or if the number of entries changed
+    if (_decryptedPasswords.length != totalEntries) {
+      await _decryptAllPasswords();
+    }
   }
 
   Future<void> _decryptAllPasswords() async {
-    final encryptionService = context.read<EncryptionService>();
-    final clients = context.read<AppProvider>().clients;
+    if (_isDecrypting) return; // Prevent multiple simultaneous decryption calls
 
-    for (final client in clients) {
-      for (final entry in client.passwordEntries) {
-        try {
-          final decrypted = encryptionService.decryptPassword(entry.encryptedPassword);
-          _decryptedPasswords[entry.id] = decrypted;
-        } catch (e) {
-          _decryptedPasswords[entry.id] = '';
+    setState(() => _isDecrypting = true);
+
+    try {
+      final encryptionService = context.read<EncryptionService>();
+      final clients = context.read<AppProvider>().clients;
+
+      _decryptedPasswords.clear(); // Clear existing decrypted passwords
+
+      for (final client in clients) {
+        for (final entry in client.passwordEntries) {
+          try {
+            final decrypted = encryptionService.decryptPassword(entry.encryptedPassword);
+            _decryptedPasswords[entry.id] = decrypted;
+          } catch (e) {
+            _decryptedPasswords[entry.id] = '';
+          }
         }
       }
-    }
 
-    if (mounted) setState(() {});
+      if (mounted) setState(() {});
+    } finally {
+      if (mounted) setState(() => _isDecrypting = false);
+    }
   }
 
   List<PasswordEntry> _getAllEntries() {
@@ -108,14 +135,22 @@ class _PasswordBoardState extends State<PasswordBoard> {
         foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              setState(() {
-                _decryptedPasswords.clear();
-                _selectedEntry = null;
-              });
-              _decryptAllPasswords();
-            },
+            icon: _isDecrypting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.refresh),
+            onPressed: _isDecrypting
+                ? null
+                : () async {
+                    setState(() {
+                      _decryptedPasswords.clear();
+                      _selectedEntry = null;
+                    });
+                    await _decryptAllPasswords();
+                  },
             tooltip: 'Refresh',
           ),
           IconButton(
