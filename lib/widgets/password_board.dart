@@ -1099,89 +1099,92 @@ class _PasswordBoardState extends State<PasswordBoard> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hoveredFields[fieldKey] = true),
       onExit: (_) => setState(() => _hoveredFields[fieldKey] = false),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isHovered
-              ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
-              : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
+      child: GestureDetector(
+        onTap: value.isNotEmpty ? () => _copyToClipboard(value, 'Password copied') : null,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
             color: isHovered
-                ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
-                : Theme.of(context).colorScheme.outline.withOpacity(0.2),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              Icons.lock,
-              size: 20,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+                : Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isHovered
+                  ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+                  : Theme.of(context).colorScheme.outline.withOpacity(0.2),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.lock,
+                size: 20,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      displayValue,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontFamily: 'monospace',
+                        color: Color(0xFF2E7D32), // Password green color
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Row(
                 children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  if (isHovered && value.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        'Copy',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    displayValue,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontFamily: 'monospace',
-                      color: Color(0xFF2E7D32), // Password green color
+                  IconButton(
+                    icon: Icon(
+                      showPassword ? Icons.visibility_off : Icons.visibility,
+                      size: 18,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    onPressed: value.isNotEmpty ? () {
+                      setState(() {
+                        _showPasswords[entryId] = !(_showPasswords[entryId] ?? false);
+                      });
+                    } : null,
+                    tooltip: showPassword ? 'Hide password' : 'Show password',
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                   ),
                 ],
               ),
-            ),
-            Row(
-              children: [
-                if (isHovered && value.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'Copy',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.onPrimary,
-                      ),
-                    ),
-                  ),
-                IconButton(
-                  icon: Icon(
-                    showPassword ? Icons.visibility_off : Icons.visibility,
-                    size: 18,
-                  ),
-                  onPressed: value.isNotEmpty ? () {
-                    setState(() {
-                      _showPasswords[entryId] = !(_showPasswords[entryId] ?? false);
-                    });
-                  } : null,
-                  tooltip: showPassword ? 'Hide password' : 'Show password',
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
