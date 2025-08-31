@@ -47,7 +47,7 @@ jobs:
         channel: 'stable'
         cache: true
 
-    - name: Cache system dependencies
+    - name: Cache APT packages
       uses: actions/cache@v4
       with:
         path: |
@@ -80,7 +80,7 @@ jobs:
     - name: Build Linux release
       run: |
         echo "Starting Flutter build..."
-        time flutter build linux --release
+        time flutter build linux --release --build-name=${{ needs.extract-version.outputs.version }} --build-number=1
       timeout-minutes: 20
       env:
         FLUTTER_BUILD_MODE: release
@@ -131,11 +131,11 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          C:\ProgramData\Microsoft\Windows\Start Menu\Programs
-          C:\Windows\System32
-        key: windows-sys-deps-${{ hashFiles('**/pubspec.lock') }}
+          C:\Users\runneradmin\.flutter-tool-cache
+          C:\Users\runneradmin\AppData\Local\Pub\Cache
+        key: windows-flutter-pub-${{ hashFiles('**/pubspec.lock') }}
         restore-keys: |
-          windows-sys-deps-
+          windows-flutter-pub-
 
     - name: Enable Windows desktop
       run: flutter config --enable-windows-desktop
@@ -148,7 +148,7 @@ jobs:
     - name: Build Windows release
       run: |
         echo "Starting Flutter Windows build..."
-        flutter build windows --release
+        flutter build windows --release --build-name=${{ needs.extract-version.outputs.version }} --build-number=1
       timeout-minutes: 15
 
     - name: Create Windows archive
@@ -195,12 +195,11 @@ jobs:
       uses: actions/cache@v4
       with:
         path: |
-          /usr/local/lib
-          /usr/local/include
-          /Library/Developer/CommandLineTools
-        key: macos-sys-deps-${{ hashFiles('**/pubspec.lock') }}
+          /Users/runner/Library/Caches/flutter
+          /Users/runner/.pub-cache
+        key: macos-flutter-pub-${{ hashFiles('**/pubspec.lock') }}
         restore-keys: |
-          macos-sys-deps-
+          macos-flutter-pub-
 
     - name: Enable macOS desktop
       run: flutter config --enable-macos-desktop
@@ -213,7 +212,7 @@ jobs:
     - name: Build macOS release
       run: |
         echo "Starting Flutter macOS build..."
-        flutter build macos --release
+        flutter build macos --release --build-name=${{ needs.extract-version.outputs.version }} --build-number=1
       timeout-minutes: 15
 
     - name: Create macOS archive
