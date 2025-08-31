@@ -5,6 +5,7 @@ import '../models/models.dart';
 import '../providers/app_provider.dart';
 import '../services/services.dart';
 import 'add_password_dialog.dart';
+import 'keychain_settings_dialog.dart';
 
 class PasswordBoard extends StatefulWidget {
   const PasswordBoard({super.key});
@@ -696,6 +697,13 @@ class _PasswordBoardState extends State<PasswordBoard> {
     );
   }
 
+  void _showKeychainSettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => const KeychainSettingsDialog(),
+    );
+  }
+
   void _showSettingsDialog() {
     showDialog(
       context: context,
@@ -704,6 +712,15 @@ class _PasswordBoardState extends State<PasswordBoard> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            ListTile(
+              leading: const Icon(Icons.key),
+              title: const Text('Keychain Integration'),
+              subtitle: const Text('System keychain and biometric settings'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _showKeychainSettingsDialog();
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.security),
               title: const Text('Master Password'),
