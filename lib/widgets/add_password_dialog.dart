@@ -124,7 +124,18 @@ class _AddPasswordDialogState extends State<AddPasswordDialog> {
                     icon: Icon(
                       _showPassword ? Icons.visibility_off : Icons.visibility,
                     ),
-                    onPressed: () => setState(() => _showPassword = !_showPassword),
+                    onPressed: () {
+                      setState(() {
+                        _showPassword = !_showPassword;
+                      });
+                    },
+                    tooltip: _showPassword ? 'Hide password' : 'Show password',
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
+                    ),
                   ),
                 ),
                 obscureText: !_showPassword,

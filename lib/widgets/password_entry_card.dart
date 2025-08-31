@@ -190,8 +190,9 @@ class _PasswordEntryCardState extends State<PasswordEntryCard> {
   }
 
   Widget _buildPasswordField(BuildContext context) {
-    final displayPassword = widget.decryptedPassword ?? '••••••••';
-    final actualPassword = widget.decryptedPassword ?? '';
+    final hasDecryptedPassword = widget.decryptedPassword != null && widget.decryptedPassword!.isNotEmpty;
+    final displayPassword = hasDecryptedPassword ? widget.decryptedPassword! : '••••••••';
+    final actualPassword = hasDecryptedPassword ? widget.decryptedPassword! : '';
 
     return Row(
       children: [
@@ -216,9 +217,12 @@ class _PasswordEntryCardState extends State<PasswordEntryCard> {
                 children: [
                   Expanded(
                     child: Text(
-                      _showPassword ? actualPassword : displayPassword,
+                      _showPassword ? (hasDecryptedPassword ? actualPassword : 'No password available') : displayPassword,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontFamily: 'monospace',
+                        color: _showPassword && hasDecryptedPassword
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
                       ),
                     ),
                   ),
@@ -227,15 +231,33 @@ class _PasswordEntryCardState extends State<PasswordEntryCard> {
                       _showPassword ? Icons.visibility_off : Icons.visibility,
                       size: 20,
                     ),
-                    onPressed: () => setState(() => _showPassword = !_showPassword),
+                    onPressed: () {
+                      setState(() {
+                        _showPassword = !_showPassword;
+                        // Debug print to verify toggle is working
+                        print('Password visibility toggled: $_showPassword');
+                      });
+                    },
                     tooltip: _showPassword ? 'Hide password' : 'Show password',
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.copy, size: 20),
-                    onPressed: actualPassword.isNotEmpty
+                    onPressed: hasDecryptedPassword
                         ? () => _copyToClipboard(actualPassword, 'Password copied')
                         : null,
-                    tooltip: 'Copy password',
+                    tooltip: hasDecryptedPassword ? 'Copy password' : 'Password not available',
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(
+                      minWidth: 32,
+                      minHeight: 32,
+                    ),
                   ),
                 ],
               ),

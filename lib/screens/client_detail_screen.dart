@@ -37,10 +37,11 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
     // Decrypt passwords for display
     for (final entry in _client.passwordEntries) {
       try {
-        _decryptedPasswords[entry.id] = encryptionService.decryptPassword(entry.encryptedPassword);
+        final decrypted = encryptionService.decryptPassword(entry.encryptedPassword);
+        _decryptedPasswords[entry.id] = decrypted;
       } catch (e) {
-        // If decryption fails, show a placeholder
-        _decryptedPasswords[entry.id] = '••••••••';
+        // If decryption fails, clear the entry
+        _decryptedPasswords.remove(entry.id);
       }
     }
 
@@ -77,6 +78,11 @@ class _ClientDetailScreenState extends State<ClientDetailScreen> {
 
           if (updatedClient != _client) {
             _client = updatedClient;
+            _decryptPasswords();
+          }
+
+          // Ensure passwords are decrypted when the widget is first built
+          if (_decryptedPasswords.isEmpty && _client.passwordEntries.isNotEmpty) {
             _decryptPasswords();
           }
 
