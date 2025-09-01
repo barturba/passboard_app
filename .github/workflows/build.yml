@@ -307,7 +307,7 @@ jobs:
           echo "exists=false" >> $GITHUB_OUTPUT
         fi
       env:
-        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Create Release
       if: steps.check_release.outputs.exists == 'false'
@@ -359,7 +359,7 @@ jobs:
           password_board_windows.zip
           password_board_macos.zip
       env:
-        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Upload to existing release
       if: steps.check_release.outputs.exists == 'true'
@@ -369,4 +369,4 @@ jobs:
         gh release upload v${{ needs.extract-version.outputs.version }} password_board_windows.zip --clobber
         gh release upload v${{ needs.extract-version.outputs.version }} password_board_macos.zip --clobber
       env:
-        GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
