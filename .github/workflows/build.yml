@@ -156,11 +156,25 @@ jobs:
         echo "Checking Windows build directory structure..."
         Get-ChildItem build/windows/x64/runner/ -ErrorAction SilentlyContinue || echo "Build directory not found"
         if (Test-Path "build/windows/x64/runner/Release") {
-          echo "Creating Windows archive..."
           cd build/windows/x64/runner/Release
-          Compress-Archive -Path . -DestinationPath "${env:GITHUB_WORKSPACE}/password_board_windows.zip" -Force
-          echo "Archive created successfully"
-          Get-Item "${env:GITHUB_WORKSPACE}/password_board_windows.zip"
+          echo "Files in Release directory:"
+          Get-ChildItem -Recurse | Select-Object FullName, Length | Format-Table -AutoSize
+
+          # Check if there are multiple files or just an exe
+          $exeFiles = Get-ChildItem -Filter "*.exe" -Recurse
+          $allFiles = Get-ChildItem -Recurse -File
+
+          if ($exeFiles.Count -eq 1 -and $allFiles.Count -eq 1) {
+            echo "Only single .exe file found - uploading directly"
+            Copy-Item $exeFiles[0].FullName "${env:GITHUB_WORKSPACE}/password_board_windows.exe"
+            echo "EXE copied successfully"
+            Get-Item "${env:GITHUB_WORKSPACE}/password_board_windows.exe"
+          } else {
+            echo "Multiple files found - creating zip archive"
+            Compress-Archive -Path . -DestinationPath "${env:GITHUB_WORKSPACE}/password_board_windows.zip" -Force
+            echo "Archive created successfully"
+            Get-Item "${env:GITHUB_WORKSPACE}/password_board_windows.zip"
+          }
         } else {
           echo "Windows Release directory not found, checking alternatives..."
           Get-ChildItem build/windows/ -Recurse -Directory | Where-Object { $_.Name -like "*Release*" -or $_.Name -like "*release*" }
@@ -172,7 +186,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: password-board-windows
-        path: password_board_windows.zip
+        path: password_board_windows.*
         retention-days: 30
 
   build-macos:
@@ -283,11 +297,18 @@ jobs:
       run: |
         # Move individual platform files to root for release
         mv artifacts/password-board-linux/password_board_linux.tar.gz ./
-        mv artifacts/password-board-windows/password_board_windows.zip ./
+
+        # Handle Windows file (could be .exe or .zip)
+        if [ -f "artifacts/password-board-windows/password_board_windows.exe" ]; then
+          mv artifacts/password-board-windows/password_board_windows.exe ./
+        elif [ -f "artifacts/password-board-windows/password_board_windows.zip" ]; then
+          mv artifacts/password-board-windows/password_board_windows.zip ./
+        fi
+
         mv artifacts/password-board-macos/password_board_macos.zip ./
 
         # List files to verify
-        ls -la *.tar.gz *.zip
+        ls -la *.tar.gz *.zip *.exe
 
     - name: Create git tag
       run: |
@@ -322,7 +343,7 @@ jobs:
 
           ### Downloads
           - **🐧 Linux**: `password_board_linux.tar.gz`
-          - **🪟 Windows**: `password_board_windows.zip`
+          - **🪟 Windows**: `password_board_windows.exe` or `password_board_windows.zip`
           - **🍎 macOS**: `password_board_macos.zip`
 
           ### Installation Instructions
@@ -336,8 +357,8 @@ jobs:
 
           **🪟 Windows:**
           ```cmd
-          # Extract password_board_windows.zip
-          # Run password_board.exe
+          # If you downloaded .exe: Just run password_board_windows.exe
+          # If you downloaded .zip: Extract and run password_board.exe
           ```
 
           **🍎 macOS:**
@@ -356,7 +377,7 @@ jobs:
 
         files: |
           password_board_linux.tar.gz
-          password_board_windows.zip
+          password_board_windows.*
           password_board_macos.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -366,7 +387,14 @@ jobs:
       run: |
         echo "Uploading assets to existing release v${{ needs.extract-version.outputs.version }}"
         gh release upload v${{ needs.extract-version.outputs.version }} password_board_linux.tar.gz --clobber
-        gh release upload v${{ needs.extract-version.outputs.version }} password_board_windows.zip --clobber
+
+        # Upload Windows file (could be .exe or .zip)
+        if [ -f "password_board_windows.exe" ]; then
+          gh release upload v${{ needs.extract-version.outputs.version }} password_board_windows.exe --clobber
+        elif [ -f "password_board_windows.zip" ]; then
+          gh release upload v${{ needs.extract-version.outputs.version }} password_board_windows.zip --clobber
+        fi
+
         gh release upload v${{ needs.extract-version.outputs.version }} password_board_macos.zip --clobber
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
