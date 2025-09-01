@@ -308,7 +308,9 @@ jobs:
         mv artifacts/password-board-macos/password_board_macos.zip ./
 
         # List files to verify
-        ls -la *.tar.gz *.zip *.exe
+        echo "Files prepared for release:"
+        ls -la *.tar.gz *.zip 2>/dev/null || echo "No tar.gz or zip files found"
+        ls -la *.exe 2>/dev/null || echo "No exe files found"
 
     - name: Create git tag
       run: |
