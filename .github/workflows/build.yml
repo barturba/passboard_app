@@ -320,23 +320,39 @@ jobs:
         ls -la *.tar.gz *.zip 2>/dev/null || echo "No tar.gz or zip files found"
         ls -la *.exe 2>/dev/null || echo "No exe files found"
 
-    - name: Verify tag exists
+    - name: Handle versioning strategy
       run: |
         if [[ $GITHUB_REF == refs/tags/v* ]]; then
           echo "Using existing tag: $GITHUB_REF"
+          VERSION_TAG=$GITHUB_REF
         else
-          echo "No tag found, this should not happen for releases"
-          exit 1
+          echo "No tag found, will create one from pubspec version"
+          VERSION_TAG="v${VERSION}"
+          echo "Will create tag: $VERSION_TAG"
         fi
+        echo "version_tag=$VERSION_TAG" >> $GITHUB_OUTPUT
+      env:
+        VERSION: ${{ needs.extract-version.outputs.version }}
+      id: version_handler
+
+    - name: Create tag if needed
+      if: steps.version_handler.outputs.version_tag != '' && !startsWith(github.ref, 'refs/tags/')
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git tag ${{ steps.version_handler.outputs.version_tag }}
+        git push origin ${{ steps.version_handler.outputs.version_tag }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Check if release exists
       id: check_release
       run: |
-        if gh release view v${{ needs.extract-version.outputs.version }} >/dev/null 2>&1; then
-          echo "Release v${{ needs.extract-version.outputs.version }} already exists"
+        if gh release view ${{ steps.version_handler.outputs.version_tag }} >/dev/null 2>&1; then
+          echo "Release ${{ steps.version_handler.outputs.version_tag }} already exists"
           echo "exists=true" >> $GITHUB_OUTPUT
         else
-          echo "Release v${{ needs.extract-version.outputs.version }} does not exist"
+          echo "Release ${{ steps.version_handler.outputs.version_tag }} does not exist"
           echo "exists=false" >> $GITHUB_OUTPUT
         fi
       env:
@@ -346,12 +362,12 @@ jobs:
       if: steps.check_release.outputs.exists == 'false'
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v${{ needs.extract-version.outputs.version }}
-        name: Password Board v${{ needs.extract-version.outputs.version }}
+        tag_name: ${{ steps.version_handler.outputs.version_tag }}
+        name: Password Board ${{ steps.version_handler.outputs.version_tag }}
         draft: true
         prerelease: false
         body: |
-          ## Password Board v${{ needs.extract-version.outputs.version }}
+          ## Password Board ${{ steps.version_handler.outputs.version_tag }}
 
           Cross-platform desktop application for secure password management.
 
@@ -399,16 +415,16 @@ jobs:
     - name: Upload to existing release
       if: steps.check_release.outputs.exists == 'true'
       run: |
-        echo "Uploading assets to existing release v${{ needs.extract-version.outputs.version }}"
-        gh release upload v${{ needs.extract-version.outputs.version }} password_board_linux.tar.gz --clobber
+        echo "Uploading assets to existing release ${{ steps.version_handler.outputs.version_tag }}"
+        gh release upload ${{ steps.version_handler.outputs.version_tag }} password_board_linux.tar.gz --clobber
 
         # Upload Windows file (could be .exe or .zip)
         if [ -f "password_board_windows.exe" ]; then
-          gh release upload v${{ needs.extract-version.outputs.version }} password_board_windows.exe --clobber
+          gh release upload ${{ steps.version_handler.outputs.version_tag }} password_board_windows.exe --clobber
         elif [ -f "password_board_windows.zip" ]; then
-          gh release upload v${{ needs.extract-version.outputs.version }} password_board_windows.zip --clobber
+          gh release upload ${{ steps.version_handler.outputs.version_tag }} password_board_windows.zip --clobber
         fi
 
-        gh release upload v${{ needs.extract-version.outputs.version }} password_board_macos.zip --clobber
+        gh release upload ${{ steps.version_handler.outputs.version_tag }} password_board_macos.zip --clobber
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
