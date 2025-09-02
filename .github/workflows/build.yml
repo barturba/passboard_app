@@ -404,27 +404,45 @@ jobs:
           - 📊 Client organization
           - 🎨 Modern Material Design 3 UI
           - 🔄 Cross-platform compatibility
-
-        files: |
-          password_board_linux.tar.gz
-          password_board_windows.*
-          password_board_macos.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Upload to existing release
-      if: steps.check_release.outputs.exists == 'true'
+    - name: Upload release assets
       run: |
-        echo "Uploading assets to existing release ${{ steps.version_handler.outputs.version_tag }}"
-        gh release upload ${{ steps.version_handler.outputs.version_tag }} password_board_linux.tar.gz --clobber
+        echo "Available files for upload:"
+        ls -la *.tar.gz *.zip *.exe 2>/dev/null || echo "No build artifacts found"
+
+        echo "Uploading assets to release ${{ steps.version_handler.outputs.version_tag }}"
+
+        # Upload Linux build
+        if [ -f "password_board_linux.tar.gz" ]; then
+          echo "Uploading Linux build..."
+          gh release upload ${{ steps.version_handler.outputs.version_tag }} password_board_linux.tar.gz --clobber
+        else
+          echo "Warning: Linux build not found"
+        fi
 
         # Upload Windows file (could be .exe or .zip)
         if [ -f "password_board_windows.exe" ]; then
+          echo "Uploading Windows exe..."
           gh release upload ${{ steps.version_handler.outputs.version_tag }} password_board_windows.exe --clobber
         elif [ -f "password_board_windows.zip" ]; then
+          echo "Uploading Windows zip..."
           gh release upload ${{ steps.version_handler.outputs.version_tag }} password_board_windows.zip --clobber
+        else
+          echo "Warning: Windows build not found"
         fi
 
-        gh release upload ${{ steps.version_handler.outputs.version_tag }} password_board_macos.zip --clobber
+        # Upload macOS build
+        if [ -f "password_board_macos.zip" ]; then
+          echo "Uploading macOS build..."
+          gh release upload ${{ steps.version_handler.outputs.version_tag }} password_board_macos.zip --clobber
+        else
+          echo "Warning: macOS build not found"
+        fi
+
+        echo "Release upload complete"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
